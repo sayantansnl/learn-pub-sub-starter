@@ -14,53 +14,35 @@ import (
 
 func main() {
 	fmt.Println("Starting Peril client...")
-	gamelogic.PrintServerHelp()
-	connectionString := "amqp://guest:guest@localhost:5672/"
-	conn, err := amqp.Dial(connectionString)
+	const rabbitConnString = "amqp://guest:guest@localhost:5672/"
+
+	conn, err := amqp.Dial(rabbitConnString)
 	if err != nil {
-		log.Fatalf("error in connecting to client, %v", err)
+		log.Fatalf("could not connect to RabbitMQ: %v", err)
 	}
 	defer conn.Close()
+	fmt.Println("Peril game client connected to RabbitMQ!")
+
 	username, err := gamelogic.ClientWelcome()
 	if err != nil {
-		log.Fatalf("error in getting username: %v", err)
+		log.Fatalf("could not get username: %v", err)
 	}
-	queueName := routing.PauseKey + "." + username
-	channel, _, err := pubsub.DeclareAndBind(conn, routing.ExchangePerilDirect, queueName, routing.PauseKey, pubsub.Transient)
+
+	_, queue, err := pubsub.DeclareAndBind(
+		conn,
+		routing.ExchangePerilDirect,
+		routing.PauseKey+"."+username,
+		routing.PauseKey,
+		pubsub.Transient,
+	)
 	if err != nil {
-		log.Fatalf("failure to bind queue: %v", err)
+		log.Fatalf("could not subscribe to pause: %v", err)
 	}
+	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
-	for {
-		userInput := gamelogic.GetInput()
-		if len(userInput) == 0 {
-			continue
-		}
-		first_word := userInput[0]
-		if first_word == "pause" {
-			fmt.Println("sending pause message")
-			pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-				IsPaused: true,
-			})
-		} else if first_word == "resume" {
-			fmt.Println("sending resume message")
-			pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-				IsPaused: false,
-			})
-		} else if first_word == "quit" {
-			fmt.Println("sending quit message, exiting")
-			pubsub.PublishJSON(channel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
-				IsPaused: true,
-			})
-			break
-		} else {
-			fmt.Println("unable to understand command")
-		}
-	}
-
-	//wait for ctrl+c
+	// wait for ctrl+c
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt)
 	<-signalChan
-	fmt.Println("Connection closed.")
+	fmt.Println("RabbitMQ connection closed.")
 }
