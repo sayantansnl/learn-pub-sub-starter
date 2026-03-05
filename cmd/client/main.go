@@ -37,7 +37,7 @@ func main() {
 	pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilDirect,
-		routing.PauseKey+"."+username,
+		routing.PauseKey+"."+gs.GetUsername(),
 		routing.PauseKey,
 		pubsub.Transient,
 		handlerPause(gs),
@@ -46,8 +46,8 @@ func main() {
 	pubsub.SubscribeJSON(
 		conn,
 		routing.ExchangePerilTopic,
+		routing.ArmyMovesPrefix+"*"+gs.GetUsername(),
 		routing.ArmyMovesPrefix+".*",
-		routing.ArmyMovesPrefix+"."+username,
 		pubsub.Transient,
 		handlerMove(gs),
 	)
