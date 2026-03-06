@@ -36,8 +36,9 @@ func handlerMove(gs *gamelogic.GameState, channel amqp.Channel) func(gamelogic.A
 				},
 			); err != nil {
 				fmt.Println(err)
+				return pubsub.NackRequeue
 			}
-			return pubsub.NackRequeue
+			return pubsub.Ack
 		default:
 			fmt.Println("error: unknown outcome")
 			return pubsub.NackDiscard
