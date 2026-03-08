@@ -27,17 +27,16 @@ func main() {
 
 	gamelogic.PrintServerHelp()
 
-	_, queue, err := pubsub.DeclareAndBind(
+	if err := pubsub.SubscribeGob(
 		conn,
 		routing.ExchangePerilTopic,
 		routing.GameLogSlug,
 		routing.GameLogSlug+".*",
 		pubsub.Durable,
-	)
-	if err != nil {
-		log.Fatalf("could not subscribe to pause: %v", err)
+		handlerWriteLogs(),
+	); err != nil {
+		log.Fatalf("couldn't subscribe Gob: %v", err)
 	}
-	fmt.Printf("Queue %v declared and bound!\n", queue.Name)
 
 	for {
 		words := gamelogic.GetInput()
