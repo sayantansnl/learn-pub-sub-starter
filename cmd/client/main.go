@@ -49,7 +49,7 @@ func main() {
 		routing.ArmyMovesPrefix+"*"+gs.GetUsername(),
 		routing.ArmyMovesPrefix+".*",
 		pubsub.Transient,
-		handlerMove(gs, *channel),
+		handlerMove(gs, channel),
 	)
 
 	pubsub.SubscribeJSON(
@@ -58,7 +58,7 @@ func main() {
 		routing.WarRecognitionsPrefix,
 		routing.WarRecognitionsPrefix+".*",
 		pubsub.Durable,
-		handlerWar(gs),
+		handlerWar(gs, channel),
 	)
 
 	for {
