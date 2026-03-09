@@ -84,6 +84,10 @@ func SubscribeJSON[T any](
 	if err != nil {
 		return err
 	}
+	err = channel.Qos(10, 0, false)
+	if err != nil {
+		return fmt.Errorf("could not set QoS: %v", err)
+	}
 	deliveryChan, err := channel.Consume(queueName, "", false, false, false, false, nil)
 	if err != nil {
 		return err
@@ -134,6 +138,10 @@ func SubscribeGob[T any](
 	channel, _, err := DeclareAndBind(conn, exchange, queueName, key, queueType)
 	if err != nil {
 		return err
+	}
+	err = channel.Qos(10, 0, false)
+	if err != nil {
+		return fmt.Errorf("could not set QoS: %v", err)
 	}
 	deliveryChan, err := channel.Consume(queueName, "", false, false, false, false, nil)
 	if err != nil {
